@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daff Digital Library - Web Novel</title>
+    <style>
+        /* Desain Dasar */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.8;
+            padding: 20px;
+        }
+
+        /* === STYLE LOADING PAGE DENGAN ANIMASI GRADASI CSS === */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            /* Efek pergeseran warna tema gelap magis/fantasi */
+            background: linear-gradient(-45deg, #0d1117, #1f242c, #161b22, #051622);
+            background-size: 400% 400%;
+            animation: gradientMove 8s ease infinite;
+            transition: opacity 0.6s ease, visibility 0.6s;
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .loading-content {
+            text-align: center;
+            padding: 20px;
+        }
+        .loading-title {
+            font-size: 2.5rem;
+            color: #58a6ff;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(88, 166, 255, 0.6);
+        }
+        .loading-subtitle {
+            font-size: 1.1rem;
+            color: #e6edf3;
+            margin-bottom: 40px;
+            font-style: italic;
+        }
+        .btn-mulai {
+            padding: 15px 45px;
+            font-size: 1.2rem;
+            background-color: #f28705;
+            color: #0d1117;
+            border: none;
+            border-radius: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(242, 135, 5, 0.6);
+            transition: transform 0.2s;
+        }
+        .btn-mulai:active {
+            transform: scale(0.95);
+        }
+
+        /* === STYLE HALAMAN LIST CERITA (MENU UTAMA) === */
+        #mainMenu {
+            display: none; /* Sembunyikan dulu di awal */
+            max-width: 600px;
+            margin: 40px auto;
+            animation: fadeIn 0.8s ease;
+        }
+        .menu-title {
+            text-align: center;
+            font-size: 1.8rem;
+            color: #58a6ff;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            border-bottom: 2px solid #21262d;
+            padding-bottom: 10px;
+        }
+        .card-cerita {
+            background: #161b22;
+            border: 1px solid #30363d;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            transition: transform 0.2s, border-color 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+        .card-cerita:not(.locked):hover {
+            transform: translateY(-3px);
+            border-color: #58a6ff;
+        }
+        .card-cerita h3 {
+            color: #f28705;
+            font-size: 1.3rem;
+            margin-bottom: 5px;
+        }
+        .card-cerita p {
+            font-size: 0.9rem;
+            color: #8b949e;
+        }
+        /* Style untuk cerita yang Coming Soon */
+        .card-cerita.locked {
+            background: #0f141c;
+            border: 1px dashed #30363d;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        .card-cerita.locked h3 {
+            color: #8b949e;
+        }
+        .badge-soon {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #21262d;
+            color: #f28705;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            border: 1px solid #30363d;
+        }
+
+        /* === STYLE HALAMAN TEMPAT BACA NOVEL === */
+        #novelInterface {
+            display: none; /* Sembunyikan dulu di awal */
+            max-width: 600px;
+            margin: 0 auto;
+            background: #161b22;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+            border: 1px solid #30363d;
+            animation: fadeIn 0.5s ease;
+        }
+        .audio-control {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .btn-kembali {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        .btn-audio {
+            background-color: #21262d;
+            border: 1px solid #30363d;
+            color: #c9d1d9;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            cursor: pointer;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #21262d;
+            padding-bottom: 15px;
+        }
+        header h1 { font-size: 1.6rem; color: #58a6ff; text-transform: uppercase; }
+        header p { font-size: 0.9rem; color: #8b949e; font-style: italic; }
+        
+        .welcome-box {
+            background-color: #1f242c;
+            border-left: 4px solid #58a6ff;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+        .highlight-info { color: #f28705; font-weight: bold; }
+        .bab-select-container { margin-bottom: 20px; }
+        select {
+            width: 100%;
+            padding: 10px;
+            background: #21262d;
+            color: #f0f6fc;
+            border: 1px solid #30363d;
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+        }
+        .konten-novel {
+            font-size: 1.05rem;
+            text-align: justify;
+            white-space: pre-line;
+            margin-bottom: 30px;
+        }
+        .navigasi-tombol { display: flex; gap: 10px; }
+        .navigasi-tombol button { flex: 1; }
+        
+        button {
+            padding: 12px;
+            background-color: #238636;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:disabled { background-color: #21262d; color: #8b949e; cursor: not-allowed; border: 1px solid #30363d; }
+        button:active { background-color: #2ea043; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+<!-- === ELEMENT LOADING SCREEN DENGAN ANIMASI GRADASI === -->
+<div id="loadingScreen">
+    <div class="loading-content">
+        <div class="loading-title">Daff Library</div>
+        <div class="loading-subtitle">Selamat Datang di Gerbang Cerita</div>
+        <button class="btn-mulai" onclick="mulaiWebNovel()">⚔️ Masuk Pustaka</button>
+    </div>
+</div>
+
+<!-- === AUDIO ELEMENT === -->
+<audio id="loadingSound" src="daf.mp3" preload="auto"></audio>
+<audio id="bgmSound" src="jawa.mp3" loop preload="auto"></audio>
+
+<!-- === HALAMAN MENU UTAMA (LIST CERITA) === -->
+<div id="mainMenu">
+    <div class="menu-title">📚 Pilih Cerita</div>
+    
+    <!-- 1. Cerita Main Aktif -->
+    <div class="card-cerita" onclick="bukaNovel()">
+        <h3>Emperium Chronicles</h3>
+        <p>The Legacy of Joseph. Ikuti perjuangan Alex membangkitkan kekuatan Ksatria Cahaya yang telah lama hilang demi melindungi kerajaan.</p>
+    </div>
+
+    <!-- 2. Cerita Misteri Masjid Angker -->
+    <div class="card-cerita locked">
+        <h3>Misteri Masjid Angker</h3>
+        <p>Suasana malam berubah mencekam ketika rahasia-rahasia gelap di balik dinding rumah ibadah tua mulai terkuak satu per satu...</p>
+        <span class="badge-soon">Coming Soon ⏳</span>
+    </div>
+
+    <!-- 3. Cerita Petualangan di Lorong Waktu Nusantara -->
+    <div class="card-cerita locked">
+        <h3>Petualangan di Lorong Waktu Nusantara</h3>
+        <p>Terlempar ke masa lalu lintas abad! Menjelajahi megahnya sejarah, kerajaan kuno, dan warisan legendaris nusantara.</p>
+        <span class="badge-soon">Coming Soon ⏳</span>
+    </div>
+</div>
+
+<!-- === HALAMAN INTERFACE MEMBACA NOVEL === -->
+<div id="novelInterface">
+    <div class="audio-control">
+        <button class="btn-kembali" onclick="kembaliKeMenu()">← Menu</button>
+        <button id="audioToggleBtn" class="btn-audio" onclick="toggleAudio()">🎵 Musik: ON</button>
+    </div>
+
+    <header>
+        <h1>Emperium Chronicles</h1>
+        <p>The Legacy of Joseph</p>
+    </header>
+
+    <div class="welcome-box">
+        <p>👋 <strong>Selamat membaca yaaa...</strong></p>
+        <p>📌 <span class="highlight-info">Just Info:</span> Update chapter nya itu <span class="highlight-info">seminggu 2x</span>. Jangan sampai ketinggalan kisahnya!</p>
+    </div>
+
+    <div class="bab-select-container">
+        <select id="pilihBab" onchange="gantiBabManual()">
+            <option value="0">Bab 1: Kilasan Badai dan Debu</option>
+            <option value="1">Bab 2: Senyum di Balik Tirai Istana</option>
+            <option value="2">Bab 3: Sepuluh Serangan Tekad</option>
+            <option value="3">Bab 4: Air Mata Snowdien</option>
+            <option value="4">Bab 5: Kebangkitan Ksatria Cahaya</option>
+            <option value="5" disabled>Bab 6: Segera Rilis (Next Update) ⏳</option>
+        </select>
+    </div>
+
+    <div class="konten-novel" id="isiNovel"></div>
+
+    <div class="navigasi-tombol">
+        <button id="btnPrev" onclick="babSebelumnya()">← Sebelum</button>
+        <button id="btnNext" onclick="babSelanjutnya()">Lanjut →</button>
+    </div>
+</div>
+
+<script>
+    // Data cerita Emperium Chronicles
+    const listNovel = [
+        {
+            judul: "Bab 1: Kilasan Badai dan Debu",
+            isi: `Dunia di dalam mimpinya selalu diselimuti oleh warna merah darah dan hitam pekat.\n\nAlex berada di sebuah medan perang yang hancur. Di depannya, badai salju menderu-deru, namun salju itu meleleh setiap kali menyentuh hawa magis yang luar biasa pekat di udara. Di tengah kekacauan itu, dua sosok sedang bertarung dengan kecepatan yang tak bisa diikuti oleh mata manusia.\n\nSeorang pria dengan zirah emas yang mulai retak bertarung menggunakan pedang bercahaya biru terang. Dia adalah sosok ksatria legendaris pelindung kerajaan yang sangat dihormati. Namun, lawannya bukanlah manusia biasa. Wanita itu anggun namun mengerikan, diselimuti oleh aura hitam pekat yang keluar dari tubuhnya.\n\n"Kau sudah mencapai batasmu," suara wanita itu terdengar bergema, dingin, dan menusuk tulang. Dia adalah Alice, sang penguasa dari Bangsa Abyss.\n\nDengan satu hentakan cakar kegelapannya, Alice menghantam dada sang ksatria. Zirah emas itu hancur berkeping-keping. Ksatria legendaris itu terbatuk, darah segar menyembur dari mulutnya saat tubuhnya terhempas ke tanah bersalju. Di belakangnya, Putri Anna yang masih muda menangis histeris, mencoba berlari mendekat namun tertahan oleh reruntuhan batu.\n\nAlice melangkah maju dengan angkuh, siap melepaskan serangan pamungkas untuk melenyapkan sang ksatria selamanya.\n\nNamun, dengan sisa tenaga terakhirnya, pria berzirah emas itu menolak untuk menyerah. Ia menggunakan tubuhnya yang bersimbah darah untuk bangkit, lalu menghantamkan pedang bercahaya birunya, Light Orb Calibeard, jauh ke dalam tanah membeku di Bukit Snowdien.\n\nSambil menatap langit malam yang tertutup kabut hitam Bangsa Abyss, ksatria itu berteriak dengan seluruh jiwanya:\n\n"Datanglah... wahai ksatria legendaris... LIGHT KNIGHT!!!"\n\nSeketika, pedang itu memancarkan kilatan cahaya keemasan raksasa yang membutakan seluruh medan perang, menelan sosok Alice and tangisan Putri Anna.\n\n***\n\n"Hah!"\n\nAlex terbangun dengan sentakan hebat. Napasnya memburu, memacu detak jantung yang berdentam keras di balik tulang rusuknya. Keringat dingin membasahi punggungnya, membuat kemeja linen tipis yang ia kenakan menempel lekat di kulit.\n\nDia menatap sekeliling dengan linglung. Tidak ada Alice. Tidak ada ksatria emas yang gugur. Hanya ada barak ksatria yang remang-remang, dipenuhi suara dengkuran ksatria rookie lainnya dan aroma asrama pria yang khas.\n\n"Mimpi itu... terasa begitu nyata. Siapa wanita bernama Alice itu? Dan siapa ksatria berzirah emas yang memanggil Light Knight?" bisik Alex, mengusap wajahnya dengan kasar.\n\nSelama satu bulan terakhir, mimpi buruk tentang kekalahan sang ksatria misterius selalu menghantuinya setiap malam. Namun baru kali ini, suara panggilan terakhir sebelum ksatria itu tumbang terdengar begitu jelas di telinganya, seolah-olah panggilan itu ditujukan langsung untuk dirinya.\n\nAlex tidak tahu bahwa dia hanyalah seorang pemuda desa biasa yang terpilih oleh takdir. Lamunannya langsung buyar saat suara terompet pagi berbunyi nyaring, memecah keheningan barak. Takdirnya hari ini tidak akan ditentukan oleh mimpi, melainkan oleh pedang di lapangan latihan.`
+        },
+        {
+            judul: "Bab 2: Senyum di Balik Tirai Istana",
+            isi: `Hantaman pedang kayu Napoleon terasa begitu telak di pelipis Alex. Suara benturan keras itu menyatu dengan sorak-sorai ejekan para ksatria elit di pinggir lapangan latihan.\n\nAlex terkapar di atas rumput. Dunianya mendadak berputar hebat, menyisakan rasa pening yang luar biasa. Pedang kayu miliknya sudah patah menjadi dua, terlempar jauh dari jangkauannya. Dia kalah. Napoleon berdiri di atas tubuhnya dengan napas yang teratur, menatap Alex seolah pemuda itu tak lebih dari seonggok debu yang mengotori sepatunya.\n\n"Hanya segini kemampuan seorang Rookie Knight?" Napoleon tertawa sinis, lalu dengan kasarnya menginjak punggung Alex, menekan luka-lukanya kembali ke tanah. "Kau sudah kalah sejak kau memutuskan lahir sebagai rakyat jelata, Alex."\n\nPandangan Alex mulai menggelap karena rasa sakit yang luar biasa. Namun, tepat sebelum kesadarannya benar-benar hilang, sayup-sayup ia melihat gaun perak yang anggun melangkah mendekat, diikuti oleh kepanikan di suara Napoleon yang mendadak menunduk hormat. Setelah itu, kegelapan total merenggut kesadaran Alex.\n\n***\n\nAroma daun mint dan kehangatan bunga lavender adalah hal pertama yang menyapa indra penciuman Alex saat kesadarannya perlahan kembali.\n\nPunggungnya kini bersandar pada kasur bulu yang sangat empuk, bukan lagi tanah lapangan yang keras. Alex mencoba menggerakkan jemarinya, namun rasa nyeri langsung menjalar ke seluruh tubuh, memaksanya melepaskan erangan kecil.\n\n"Jangan banyak bergerak dulu. Tulang rusukmu hampir retak karena hantaman Napoleon."\n\nSebuah suara lembut, sedingin es namun menenangkan, terdengar dari sisi kirinya.\n\nAlex membuka matanya dengan susah payah. Hal pertama yang tertangkap oleh penglihatannya adalah langit-langit kamar yang tinggi dengan ukiran emas khas istana. Namun, perhatiannya langsung teralih pada sosok wanita yang sedang duduk di samping tempat tidurnya.\n\nWanita itu berambut perak panjang yang berkilau diterpa cahaya matahari pagi dari balik jendela. Tangannya yang putih bersih sedang memeras kain kompres di dalam baskom air hangat.\n\n"P... Putri Anna?" bisik Alex, suaranya serak.\n\nJantung Alex berdegup kencang. Bukan hanya karena dia sedang berhadapan langsung dengan sang putri, tapi karena wajah itu—garis wajah yang tegas namun menyimpan kesedihan mendalam—adalah wajah wanita misterius yang selalu menangis di dalam mimpi buruknya tentang badai salju.\n\nPutri Anna tidak menjawab langsung. Dengan telaten, ia menempelkan kain hangat itu ke dahi Alex, lalu mulai memeriksa lilitan perban di dada pemuda itu.\n\n"Kau ceroboh, Alex," ucap Anna tenang, matanya menatap lurus ke dalam manik mata Alex. "Menantang Napoleon secara buta-tuli sama saja dengan menyerahkan nyawamu."\n\n"Dia yang memulainya, Yang Mulia," Alex meringis, mencoba menegakkan posisi duduknya meski ditahan oleh tangan lembut Anna. "Dia menghina semua Rookie Knight yang berasal dari rakyat jelata... Aku hanya tidak bisa diam saja saat kehormatan kami diinjak-injak."\n\nAnna menghentikan gerakannya sesaat. Sorot matanya melembut, seolah melihat bayangan sosok ksatria berzirah emas yang sangat ia kenal di masa lalu pada diri Alex. "Kekuatan sejati bukan berasal dari otot yang besar atau kesombongan ziarah perak, Alex. Kekuatan sejati lahir dari alasan kenapa kau memilih untuk bertarung."\n\nMendengar kalimat bijak itu, dada Alex bergemuruh. Rasa sakit di tubuhnya seolah menguap, digantikan oleh tekad membara yang belum pernah ia rasakan sebelumnya. Dengan sisa tenaga yang dimilikinya, Alex mengepalkan tangan kanannya di depan dada, memberikan penghormatan tertinggi seorang ksatria.\n\n"Kalau begitu... izinkan aku menemukan kekuatan itu di sampingmu, Tuan Putri," ucap Alex lantang, menatap Anna tanpa ragu. "Aku mungkin hanya rakyat jelata yang lemah sekarang. Tapi di atas darah dan luka ini, aku bersumpah... aku akan menjadi perisai yang melindungimu dari kegelapan apa pun yang mengancam Emperium!"\n\nAnna terpaku. Ruangan medis itu mendadak sunyi. Untuk pertama kalinya setelah bertahun-tahun sejak malam berdarah melawan Bangsa Abyss, sebuah senyuman tipis namun tulus terukir di bibir sang putri di balik tirai sutra istana.\n\n"Pegang sumpahmu itu, Alex. Karena besok, latihanmu yang sebenarnya akan dimulai."`
+        },
+        {
+            judul: "Bab 3: Sepuluh Serangan Tekad",
+            isi: `Halaman belakang istana tersembunyi di balik barisan pohon dedalu yang rindang. Tempat itu sunyi, jauh dari kebisingan para ksatria elit yang arogan. Di tengah reruntuhan taman tua itulah, Alex berdiri dengan napas terengah-engah, menggenggam erat sebuah pedang latihan kayu yang baru.\n\nDi depannya, Putri Anna berdiri anggun dengan jubah peraknya. Tangan kanannya memegang sebuah tongkat sihir kecil berbahan kayu cendana. Dengan satu lambaian lembut dari tangan sang putri, pusaran angin hitam kecil muncul di atas tanah, membentuk sesosok prajurit bayangan tanpa wajah.\n\n"Itu adalah Dummy Ilusi," ucap Anna tenang, suaranya menggema di antara pepohonan. "Dia bergerak menggunakan energi sihirku. Tugasmu sederhana, Alex. Daripada sibuk memikirkan bagaimana cara mengalahkan Napoleon, hancurkan boneka ini terlebih dahulu."\n\nAlex menelan ludah. Tubuhnya sebenarnya masih terasa linu akibat luka-lukanya kemarin. Namun, mengingat tatapan merendahkan dari Napoleon di lapangan latihan membuat darahnya kembali berdesir panas.\n\n"Baik, Yang Mulia," Alex mengambil ancang-ancang.\n\nDengan satu teriakan lantang, Alex menerjang maju. Ia mengayunkan pedang kayunya dengan sekuat tenaga ke arah dada sang boneka ilusi.\n\n*Plak!*\n\nSerangan pertama mentah begitu saja. Boneka bayangan itu bergerak lebih cepat dari perkiraan Alex, menepis pedangnya dengan punggung tangan lalu menghantam perut Alex hingga pemuda itu terhuyung mundur.\n\n"Serangan pertama. Terlalu terburu-buru, penuh amarah, dan tanpa arah," kritik Anna dingin dari pinggir lapangan. "Lanjut."\n\nAlex meringis, memegangi perutnya. Namun ia tidak membuang waktu. Ia kembali maju. Serangan kedua, ketiga, hingga serangan kelima... semuanya berakhir sama. Tubuh Alex terhempas ke tanah berkali-kali. Pakaian latihannya mulai kotor oleh debu dan keringat.\n\n"Fisikmu sudah mencapai batas, Alex. Jika kau menyerah sekarang, aku tidak akan menyalahkanmu," kata Anna, matanya menatap lekat ke arah pemuda yang keras kepala itu.\n\n"Menyerah?" Alex terbatuk, bangkit berdiri dengan bertumpu pada pedang kayunya. Ia menyeka keringat yang menetes ke matanya. "Jika menghadapi boneka sihir ini saja aku menyerah, maka selamanya aku hanya akan menjadi debu yang diinjak-injak di bawah sepatu Napoleon! Aku sudah bersumpah... untuk menjadi perisaimu, Putri Anna!"\n\nMendengar kata 'perisai', dada Alex tiba-tiba terasa hangat. Rasa hangat itu tidak datang dari luar, melainkan memancar dari dalam jantungnya—sebuah denyutan energi asing yang sangat mirip dengan kilatan cahaya yang ia lihat di dalam mimpi buruknya tentang ksatria berzirah emas.\n\nMasuk ke serangan kesembilan, Alex menerjang dengan pola yang berbeda. Gerakannya tidak lagi didorong oleh rasa amarah, melainkan fokus yang luar biasa tajam. Ia berhasil menghindari tebasan boneka ilusi, lalu mendaratkan serangan telak di bahunya. Namun, boneka itu belum hancur.\n\n"Ini yang terakhir... Serangan kesepuluh!"\n\nAlex melompat mundur, lalu menerjang maju untuk terakhir kalinya. Bersamaan dengan ayunan pedangnya, energi hangat di dalam dadanya mengalir deras menuju lengannya, membuat pedang kayu biasa itu mendadak memancarkan pendaran cahaya biru keemasan tipis yang samar.\n\n*BOOM!*\n\nHantaman keras bergema. Boneka ilusi sihir itu tidak hanya terlempar, tetapi meledak menjadi serpihan asap hitam yang langsung lenyap diterpa angin. Pedang kayu di tangan Alex retak parah, menyisakan asap tipis di ujungnya.\n\nAlex berlutut dengan napas yang memburu hebat, menatap tangannya sendiri dengan tidak percaya. Sementara itu, Putri Anna terpaku di tempatnya berdiri. Matanya melebar menatap sisa pendaran cahaya biru di tangan Alex—cahaya yang sangat ia kenali, cahaya yang telah hilang bertahun-tahun lalu sejak malam berdarah melawan Bangsa Abyss.\n\n"Cahaya itu..." bisik Anna lirih, tangannya bergetar kecil.\n\n"Y-Yang Mulia? Apa aku... berhasil?" tanya Alex pelan, mendongak menatap Anna.\n\nAnna dengan cepat menguasai dirinya kembali, menyembunyikan keterkejutannya di balik wajahnya yang tenang. "Kau berhasil, Alex. Kau menolak untuk menyerah. Bersiaplah, besok subuh kita akan melakukan perjalanan jauh. Kita akan pergi ke tempat di mana takdirmu yang sebenarnya menanti... Bukit Snowdien."`
+        },
+        {
+            judul: "Bab 4: Air Mata Snowdien",
+            isi: `Perjalanan menuju Bukit Snowdien memakan waktu hampir seharian penuh. Semakin jauh mereka meninggalkan Ibu Kota Emperium, hamparan rumput hijau perlahan digantikan oleh putihnya salju yang tebal. Begitu mereka tiba di kaki bukit saat senja mulai turun, badai salju langsung menyambut mereka dengan lolongan angin yang menusuk tulang.\n\nAlex merapatkan jubah wolnya, menembus kabut es yang pekat demi mengikuti langkah kaki Putri Anna di depannya. Anehnya, semakin tinggi mereka mendaki, pemandangan di sekitarnya terasa tidak asing bagi Alex. Detak jantungnya berdegup tidak keruan.\n\n*Tempat ini... ini adalah tempat di dalam mimpi burukku,* batin Alex terkesiap.\n\nDi puncak bukit yang sunyi, badai seolah berputar mengelilingi sebuah titik tengah. Di sana, tertancap sebuah pedang kuno berukuran besar. Bilahnya yang berwarna perak kebiruan diselimuti oleh lapisan es abadi yang tebal. Sebuah batu permata (orb) biru di gagangnya tampak redup, membeku layaknya jantung yang berhenti berdetak.\n\nPutri Anna menghentikan langkahnya tepat beberapa meter di depan pedang itu. Ia menatap senjata yang membeku itu dengan sorot mata yang dipenuhi kesedihan mendalam. Perlahan, setetes air mata mengalir di pipinya yang pucat, membeku menjadi kristal sebelum sempat menyentuh tanah.\n\n"Indah, bukan? Namun, keindahan tempat ini menyimpan kutukan yang tak pernah berakhir," ucap Anna lirih, suaranya hampir tertelan oleh deru angin badai.\n\nAlex melangkah maju, berdiri di samping sang putri. "Yang Mulia... pedang apa ini?"\n\nAnna menarik napas panjang, mencoba mengumpulkan kekuatan untuk membuka luka lama di hatinya. "Ini adalah Light Orb Calibeard, pedang milik ksatria terhebat yang pernah dimiliki kerajaan ini. Dan pria berzirah emas yang selalu kau lihat di dalam mimpimu itu, Alex... namanya adalah Joseph."\n\nAlex tersentak hebat. Matanya melebar menatap pedang tersebut. *"J-Joseph?"* bisiknya, teringat kembali pada seruan emosional pria di dalam mimpinya. Jadi, mimpi itu bukan sekadar bunga tidur, melainkan sebuah kilasan masa lalu yang nyata.\n\n"Tujuh tahun lalu, tempat ini tidak sedingin ini," lanjut Anna, pandangannya menerawang jauh menembus kabut salju. "Malam itu, kegelapan gulita mendadak menelan langit. Bangsa Abyss keluar dari perut bumi, dipimpin oleh sosok wanita yang sangat kejam... Alice."\n\nMendengar nama Alice, bulu kuduk Alex meremang. Aura dingin yang mencekam mendadak terasa di sekitar mereka.\n\n"Joseph bertarung habis-habisan melindungi istana dan diriku, membawaku lari hingga terpojok di puncak bukit ini," suara Anna mulai bergetar karena menahan tangis. "Dia terluka parah setelah menerima hantaman langsung dari cakar kegelapannya Alice. Namun, tepat sebelum Alice melenyapkan kami semua, Joseph menancapkan pedang ini ke tanah, memberikan seluruh sisa hidupnya untuk memanggil kekuatan ksatria legendaris... Light Knight."\n\nAnna menoleh, menatap lurus ke dalam manik mata Alex dengan tatapan penuh harapan. "Kilatan cahaya dari Joseph malam itu berhasil memukul mundur Alice dan Bangsa Abyss kembali ke kegelapan, namun Joseph gugur di tempat ini, menyisakan pedangnya yang membeku. Selama tujuh tahun, tidak ada satu pun ksatria di kerajaan ini—bahkan Napoleon sekalipun—yang mampu mencabut atau menggerakkan pedang ini satu milimeter pun."\n\nAlex terdiam seribu bahasa. Ia menatap pedang Joseph, lalu beralih menatap tangannya sendiri yang kemarin sempat memancarkan pendaran cahaya biru tipis saat menghancurkan boneka sihir.\n\n"Aku membawamu ke sini karena pedang ini hanya akan merespons jiwa yang dipilih oleh Joseph," ucap Anna, melangkah mundur dan memberi ruang bagi Alex. "Mimpimu, janjimu, dan cahayamu... takdir telah menuntunmu ke sini, Alex. Sekarang, sentuh gagang pedang itu, dan buktikan pada Emperium siapa dirimu yang sebenarnya."`
+        },
+        {
+            judul: "Bab 5: Kebangkitan Ksatria Cahaya",
+            isi: `Langkah kaki Alex terasa sangat berat menembus timbunan salju yang setinggi lutut. Angin badai di puncak Snowdien mendadak menderu lebih kencang, seolah-olah alam sendiri menolak kehadiran seorang manusia biasa di dekat senjata sang legenda.\n\nTepat di depan bilah pedang yang membeku, Alex berhenti. Uap putih pekat keluar dari mulutnya setiap kali ia mengembuskan napas. Ia menatap gagang pedang Light Orb Calibeard yang diselimuti kristal es. Entah mengapa, rasa hangat yang sempat muncul di dadanya saat latihan kemarin kini berdentam kembali—jauh lebih kuat, berirama selaras dengan pendaran redup dari batu permata biru di pedang itu.\n\nAlex menarik napas dalam-dalam, lalu perlahan menjulurkan tangan kanannya.\n\n*Zzzt!*\n\nSaat kulit telanjangnya menyentuh permukaan gagang pedang yang sedingin es, rasa sakit yang menyengat langsung menjalar ke seluruh tubuhnya. Alex mengerang kesakitan. Rasanya seperti ada ribuan jarum es yang menusuk pembuluh darahnya. Ingatannya mendadak ditarik paksa ke dalam mimpi buruk itu: kilasan cakar kegelapan Alice, darah Joseph yang tumpah, dan teriakan putus asa Putri Anna.\n\n"Ugh... aku... tidak akan melepasnya!" teriak Alex, mempererat cengkeramannya menggunakan kedua tangan.\n\nDia teringat penindasan Napoleon. Dia teringat sumpah setianya untuk menjadi perisai sang putri. Tekad suci itu membakar seluruh rasa sakit yang menderanya.\n\n“Datanglah... wahai ksatria legendaris... LIGHT KNIGHT!!!” Suara gaungan Joseph di dalam kepalanya terdengar menggelegar, namun kali ini bukan sebagai ingatan, melainkan sebagai restu.\n\n*KRETEK!*\n\nLapisan es abadi yang menyelimuti pedang itu mendadak retak. Permata orb biru di gagangnya meledak dalam pancaran cahaya biru keemasan yang luar biasa terang. Badai salju yang tadinya mengamuk hebat langsung terhenti seketika, terdorong mundur oleh gelombang energi kebaikan yang masif hingga menyisakan langit malam Snowdien yang bersih dan dipenuhi bintang.\n\nCahaya itu tidak melukai Alex. Sebaliknya, energi murni tersebut mengalir membungkus tubuhnya. Pakaian rookie miliknya yang kumal perlahan hancur, digantikan oleh armor perak berkilau dengan aksen garis emas yang memancarkan pendaran suci. Luka-lukanya sembuh seketika.\n\nDengan satu hentakan kuat, Alex menarik Light Orb Calibeard keluar dari tanah. Pedang legendaris itu kini digenggamnya dengan sempurna, terasa seringan kapas.\n\nPutri Anna yang menyaksikan hal itu dari kejauhan menutup mulutnya dengan kedua tangan. Air mata haru jatuh ke pipinya. Sosok pemuda lemah yang kemarin babak belur di lapangan latihan kini telah tiada. Yang berdiri di depannya sekarang adalah sang pengemban harapan baru bagi Emperium.\n\nThe Light Bearer telah bangkit.`
+        }
+    ];
+
+    let babSekarang = 0;
+
+    // === JAVASCRIPT CORE ALUR WEB ===
+    
+    // 1. Fungsi saat tombol Loading dipencet (DIPERBAIKI LOGIC AUDIO-NYA)
+    function mulaiWebNovel() {
+        const sfx = document.getElementById("loadingSound");
+        const bgm = document.getElementById("bgmSound");
+        const screen = document.getElementById("loadingScreen");
+        const menu = document.getElementById("mainMenu");
+
+        // Putar SFX terlebih dahulu
+        sfx.play().catch(e => console.log("SFX diblokir browser: ", e));
+
+        // Buat sistem antrean: Ketika SFX selesai bermain, baru BGM otomatis menyala
+        sfx.onended = function() {
+            bgm.play().catch(e => console.log("BGM diblokir browser: ", e));
+        };
+
+        // Hilangkan Loading Screen dengan efek transisi halus
+        screen.style.opacity = "0";
+        setTimeout(() => {
+            screen.style.visibility = "hidden";
+            // Munculkan Menu Utama (Daftar Cerita)
+            menu.style.display = "block";
+        }, 600);
+    }
+
+    // 2. Fungsi Masuk ke Interface Novel (Saat Emperium Chronicles diklik)
+    function bukaNovel() {
+        document.getElementById("mainMenu").style.display = "none";
+        document.getElementById("novelInterface").style.display = "block";
+        updateTampilan();
+    }
+
+    // 3. Fungsi Kembali ke Menu Utama
+    function kembaliKeMenu() {
+        document.getElementById("novelInterface").style.display = "none";
+        document.getElementById("mainMenu").style.display = "block";
+    }
+
+    // 4. Tombol Kontrol Musik Latar
+    function toggleAudio() {
+        const bgm = document.getElementById("bgmSound");
+        const btn = document.getElementById("audioToggleBtn");
+        
+        if (bgm.paused) {
+            bgm.play().catch(e => console.log(e));
+            btn.innerText = "🎵 Musik: ON";
+        } else {
+            bgm.pause();
+            btn.innerText = "🔇 Musik: OFF";
+        }
+    }
+
+    // 5. Fungsi Navigasi Halaman Baca
+    function updateTampilan() {
+        document.getElementById("isiNovel").innerText = listNovel[babSekarang].isi;
+        document.getElementById("pilihBab").value = babSekarang;
+
+        document.getElementById("btnPrev").disabled = (babSekarang === 0);
+        document.getElementById("btnNext").disabled = (babSekarang === listNovel.length - 1);
+        
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    }
+
+    function babSelanjutnya() {
+        if (babSekarang < listNovel.length - 1) {
+            babSekarang++;
+            updateTampilan();
+        }
+    }
+
+    function babSebelumnya() {
+        if (babSekarang > 0) {
+            babSekarang--;
+            updateTampilan();
+        }
+    }
+
+    function gantiBabManual() {
+        babSekarang = parseInt(document.getElementById("pilihBab").value);
+        updateTampilan();
+    }
+</script>
+
+</body>
+</html>
